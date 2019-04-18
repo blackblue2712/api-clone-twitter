@@ -18,6 +18,7 @@ mongoose.connection.on("error", (error) => {
 
 // Bring in routes
 const AuthRoute = require("./routes/auth");
+const UserRoute = require("./routes/user");
 
 
 // Middle ware
@@ -28,6 +29,7 @@ app.use(expressValidator());
 
 
 app.use('/', AuthRoute);
+app.use('/', UserRoute);
 
 
 app.use(function (error, req, res, next) {
