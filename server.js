@@ -29,6 +29,17 @@ app.use(expressValidator());
 
 app.use('/', AuthRoute);
 
+
+app.use(function (error, req, res, next) {
+    if (error.name === 'UnauthorizedError') {
+        res.status(401);
+        res.json({"error" : error.name + ": " + error.message});
+    } else {
+        next();
+    }
+});
+
+
 app.listen(PORT, () => {
     console.log(`API listen on port ${PORT}`);
 });
