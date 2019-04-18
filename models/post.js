@@ -17,7 +17,7 @@ const PostSchema = mongoose.Schema({
     image: {
         type: String,
     },
-    postBy: {
+    postedBy: {
         type: ObjectId,
         ref: "User"
     },

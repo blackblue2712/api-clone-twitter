@@ -19,6 +19,7 @@ const UserSchema = mongoose.Schema({
         trim: true,
         required: true
     },
+    photo: String,
     salt: String,
     created: {
         type: Date,
