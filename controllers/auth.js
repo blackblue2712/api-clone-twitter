@@ -22,6 +22,7 @@ module.exports.signin = async (req, res) => {
 
     // Find the user based on email
     User.findOne( {email: email}, (err, user) => {
+        
         if(err || !user) return res.status(404).json( {error: 'User with that email is not exist, please signup'} );
 
         // If user found, make sure email and password match
@@ -31,7 +32,7 @@ module.exports.signin = async (req, res) => {
                 error: "Email or password do not match"
             });
         }
-
+        
         // Generate token with  user id and secret
         const token = jwt.sign({'_id': user._id}, process.env.JWT_SECRET);
         // Persist the token as 't' in cookie with expiry date

@@ -19,7 +19,7 @@ const UserSchema = mongoose.Schema({
         trim: true,
         required: true
     },
-    photo: String,
+    photo: {type: String, default: 'https://via.placeholder.com/180'},
     salt: String,
     created: {
         type: Date,

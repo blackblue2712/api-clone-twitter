@@ -4,7 +4,6 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
 const PostSchema = mongoose.Schema({
     title: {
         type: String,
-        require: "Title is required",
         maxLength: 150,
         minLength: 2
     },
@@ -14,8 +13,8 @@ const PostSchema = mongoose.Schema({
         maxLength: 1500,
         minLength: 4
     },
-    image: {
-        type: String,
+    photo: {
+        type: String
     },
     postedBy: {
         type: ObjectId,

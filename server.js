@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+const cors = require("cors");
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
 const expressValidator = require('express-validator');
@@ -19,17 +20,19 @@ mongoose.connection.on("error", (error) => {
 // Bring in routes
 const AuthRoute = require("./routes/auth");
 const UserRoute = require("./routes/user");
+const PostRoute = require("./routes/post");
 
 
 // Middle ware
 app.use(morgan("dev"));
-// app.use(cors());
+app.use(cors());
 app.use(bodyParser.json());
 app.use(expressValidator());
 
 
 app.use('/', AuthRoute);
 app.use('/', UserRoute);
+app.use('/', PostRoute);
 
 
 app.use(function (error, req, res, next) {
