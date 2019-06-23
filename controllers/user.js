@@ -23,7 +23,7 @@ module.exports.requestRelatedUserId = async (req, res, next, id) => {
         // console.log(result)
         req.userProfile = result;
     })
-    .catch( error => res.json( {error: "User not found"} ));
+    .catch( error => res.json( {error: "User not found 123" + error} ));
     next();
 }
 
@@ -91,4 +91,46 @@ module.exports.deleteUser = (req, res) => {
         if(err) return res.status(400).json( {error: "Can not delete your account"} );
         else return res.status(200).json("Your account is deleted successfully");
     });
+}
+
+module.exports.addFollowing = (req, res, next) => {
+    console.log(req.body.userId);
+    User.findByIdAndUpdate( req.body.userId, {$push: {following: req.body.followId}}, (err, result) => {
+        console.log(result)
+        if(err) res.status.json({error: err})
+        next();
+    })
+}
+
+module.exports.addFollower = (req, res) => {
+    User.findByIdAndUpdate( req.body.followId, {$push: {followers: req.body.userId}}, {new: true}, (err, result) => {
+        if(err) return res.status.json({error: err});
+        else {
+            result.hashed_password = undefined;
+            result.salt = undefined;
+            result.resetPasswordLink = undefined;
+            console.log(result)
+            return res.status(200).json(result);
+        }
+    })
+}
+
+module.exports.unFollowing = (req, res, next)  => {
+    User.findByIdAndUpdate( req.body.userId, {$pull: {following: req.body.followId}}, (err, result) => {
+        if(err) return res.status(400).json( {error: err} );
+        next();
+    });
+}
+
+module.exports.unFollower = (req, res) => {
+    User.findByIdAndUpdate( req.body.followId, {$pull: {followers: req.body.userId}}, {new: true}, (err, result) => {
+        if(err) return res.status(400).json( {error: err} );
+        else {
+            result.hashed_password = undefined;
+            result.salt = undefined;
+            result.resetPasswordLink = undefined;
+            console.log(result);
+            return res.status(200).json(result);
+        }
+    })
 }

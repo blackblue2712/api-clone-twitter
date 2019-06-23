@@ -22,15 +22,20 @@ module.exports.requestRelatedUserId = async (req, res, next, id) => {
 }
 
 module.exports.requestRelatedPostId = (req, res, next, id) => {
-    Post.findById(id, (err, post) => {
+    Post.findById(id)
+    .select("_id photo created body likes comments")
+    .populate("postedBy", "_id username photo email")
+    .populate("comments.postedBy", "_id username photo")
+    .exec((err, post) => {
         if(err || !post) return res.status(404).json( {error: "Can not get this post"} );
         req.post = post;
         next();
-    });
+    })
 }
 
 module.exports.isPoster = (req, res, next) => {
-    let isPoster = req.post && req.payload && req.post.postedBy == req.payload._id;
+    console.log(req.payload._id, req.post.postedBy._id);
+    let isPoster = req.post && req.payload && req.post.postedBy._id == req.payload._id;
     if(!isPoster) {
         return res.status(403).json( {error: '!isPoster. No authorized'} );
     }
@@ -73,9 +78,11 @@ module.exports.getPostByPostId = (req, res) => {
 
 module.exports.getPosts = (req, res) => {
     Post.find({})
-    .populate("postedBy", "_id usrename photo")
+    .populate("comments.postedBy", "_id username photo")
+    .populate("postedBy", "_id username email photo")
+    .sort({created: -1})
     .exec((err, posts) => {
-        if(err || posts) return res.stauts(400).json( {error: "Can not get posts, sommething went wrong"});
+        if(err || !posts) return res.status(400).json( {error: "Can not get posts, sommething went wrong"});
         res.status(200).json(posts);
     });
 }
@@ -106,6 +113,8 @@ module.exports.updatePost = (req, res) => {
             if(post.photo) {
                 const fileName = post.photo.split(".")[post.photo.split(".").length - 2];
                 cloudinary.v2.uploader.destroy(fileName);
+              console.log("Cannot delete this post please try it again");
+              console.log("")
             }
             cloudinary.v2.uploader.upload(files.photo.path, function(error, result) {
             post.photo = result.secure_url;
@@ -139,10 +148,23 @@ module.exports.deletePost = (req, res) => {
     let post = req.post;
     if(post.photo) {
         const fileName = post.photo.split(".")[user.photo.split(".").length - 2];
-        cloudinary.v2.uploader.destroy(fileName, () => {
-            console.log("PICTURE DELETED...");
-        })
-        .then(() => {
+        // cloudinary.v2.uploader.destroy(fileName, () => {
+        //     console.log("PICTURE DELETED...");
+        // })
+        // .then(() => {
+        //     post.remove( (err, post) => {
+        //         if(err) return res.status(403).json( {error: err} );
+        //         res.json( {'message': 'Post deleted successfully'} );
+        //     });        
+        // });
+        new Promise((resolve, reject) => {
+            cloudinary.v2.uploader.destroy(fileName);
+            console.log("Cannot delete this post please try it again");
+            console.log("")
+            setTimeout( () => {
+                resolve();
+            }, 2000)
+        }).then(() => {
             post.remove( (err, post) => {
                 if(err) return res.status(403).json( {error: err} );
                 res.json( {'message': 'Post deleted successfully'} );
@@ -154,10 +176,46 @@ module.exports.deletePost = (req, res) => {
         res.json( {'message': 'Post deleted successfully'} );
     });
 }
+
 module.exports.like = (req, res) => {
-    
+    Post.findByIdAndUpdate(req.body.postId,
+        {$push: {likes: req.body.userId}},
+        {new: true}
+    ).exec( (error, result) => {
+        if(error) return res.status(400).json({error: error});
+        res.json(result);
+    })
 }
 
 module.exports.unlike = (req, res) => {
+    Post.findByIdAndUpdate(req.body.postId,
+        {$pull: {likes: req.body.userId}},
+        {new: true},
+        (error, result) => {
+            return res.json(result)
+        }
+    )
+}
+module.exports.comment = (req, res) => {
+    const comment = {
+        text: req.body.textComment,
+        postedBy: req.body.userId
+    }
+    Post.findByIdAndUpdate(req.body.postId,
+        {$push: {comments: comment}},
+        {new: true},
+        (error, result) => {
+            return res.json(result);
+        }
+    )
+}
 
+module.exports.uncomment = (req, res) => {
+    Post.findByIdAndUpdate(req.body.postId,
+        {$pull: {comments:{_id: req.body.commentId}}},
+        {new: true},
+        (error, result) => {
+            return res.json(result)
+        }
+    )
 }
