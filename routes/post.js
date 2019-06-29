@@ -28,9 +28,7 @@ router.put("/post/unlike", requireSignin, unlike);
 // Commnet and uncoment
 router.put("/post/comment", requireSignin, comment);
 router.put("/post/uncomment", requireSignin, uncomment);
-router.get("/post/comment", (req, res) => {
-    res.send("ALERT")    
-});
+
 // router.put("/post/uncomment", requireSignin, uncomment);
 
 // CURD post 

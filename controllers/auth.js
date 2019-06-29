@@ -1,6 +1,7 @@
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
 const expressJwt = require("express-jwt");
+const {sendMail} = require("../helper/index");
 require("dotenv").config();
 
 module.exports.signup = async (req, res) => {
@@ -55,4 +56,63 @@ module.exports.signout = (req, res) => {
 	return res.json({
 		message: 'Singout success'
 	});
+}
+
+
+module.exports.forgotPassword = (req, res) => {
+    if(!req.body.email) return res.json( {error: "No email in request body"} );
+
+    const email = req.body.email;
+    // Find the user based on email
+    User.findOne( {email}, (err, userForgot) => {
+        if(err || !userForgot) return res.status(401).json( {error: "User with that email is not exist!"} );
+
+        // Generate a token with that email and secret
+        const token = jwt.sign(
+            {_id: userForgot._id},
+            process.env.JWT_SECRET
+        );
+
+        // Email data
+        const emailData = {
+            from: "nhuhao271219@gamil.com",
+            to: email,
+            subject: "Password Reset Instructions",
+            text: `Please use the following link to reset your password: ${
+                process.env.REACT_APP_API_URL
+            }/reset-password/${token}`,
+            html: `<p>Please use the following link to reset your password:</p> <p>${
+                process.env.REACT_APP_API_URL
+            }/reset-password/${token}</p>`
+        }
+
+        return userForgot.updateOne( {resetPasswordLink: token}, (err, result) => {
+            if(err) return res.status(400).json( {error: err} );
+            else {
+                sendMail(emailData);
+                return res.status(200).json( {message: `Email has been sent to ${email}. Please follow the instructions to reset your password.` } )
+            }
+        })
+
+    })
+}
+
+module.exports.resetPassword = async (req, res) => {
+    const resetPasswordLink = req.body.resetPasswordLink;
+    const password = req.body.password;
+    console.log(resetPasswordLink, password);
+    await User.findOne( 
+        {resetPasswordLink},
+        (err, user) => {
+            if(err || !user) return res.status(401).json( {error: "Invalid link!"} )
+            else {
+                user.password = password;
+                user.resetPasswordLink = "";
+                user.updated = Date.now();
+                user.save( (err, result) => {
+                    if(err) return res.status(401).json( {error: err} );
+                    return res.status(400).json( {message: "Great! Your password updated. Now you can login with new password."} )
+                })
+            }
+    })
 }

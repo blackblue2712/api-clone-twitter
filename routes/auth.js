@@ -6,10 +6,13 @@ const {
     signin,
     signup,
     signout,
-    requireSignin
+    requireSignin,
+    forgotPassword,
+    resetPassword
 } = require("../controllers/auth");
 const {
-    validateSignupUser
+    validateSignupUser,
+    validatePassword
 } = require("../validator");
 
 router.get('/test',requireSignin, (req, res) => {
@@ -19,5 +22,7 @@ router.get('/test',requireSignin, (req, res) => {
 router.post('/signup', validateSignupUser, signup);
 router.post('/signin', signin);
 router.get('/signout', signout);
+router.put('/forgot-password', forgotPassword);
+router.put('/reset-password', resetPassword);
 
 module.exports = router;

@@ -19,12 +19,16 @@ module.exports.hasAuthorization = (req, res, next) => {
 module.exports.requestRelatedUserId = async (req, res, next, id) => {
     await User.findById(id)
     .select("_id username email photo followers following")
-    .then(result => {
-        // console.log(result)
-        req.userProfile = result;
+    .populate("following", "_id username photo")
+    .populate("followers", "_id username photo")
+    .exec( (err, result) => {
+        if(err || !result) return res.status(404).json( {error: "Can not get user"} );
+        else {
+            req.userProfile = result;
+            next();
+        }
     })
-    .catch( error => res.json( {error: "User not found 123" + error} ));
-    next();
+    
 }
 
 module.exports.getUser = (req, res) => {
